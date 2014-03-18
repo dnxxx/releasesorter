@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+import logging
+
+import argh
+from argh.decorators import arg, wrap_errors
+from argh.exceptions import CommandError
+
+from releasesorter import ReleaseSorter, ReleaseSorterError, setup_log
+
+
+@arg('-d', '--debug', default=False, help='Output debug info')
+@arg('-s', '--silent', default=False, help='Disable console output')
+@arg('-l', '--log', default=None, help='Log to file')
+@wrap_errors(processor=lambda excinfo: 'ERROR: {0}'.format(excinfo))
+def main(sort_dir, debug=False, silent=False, log=None):
+    """Sort all unpacked TV release files (mkv, avi).
+
+    If two or more episodes of the same series is found a series and a season
+    directory will be created and the files are moved there. All empty
+    directories in sort-dir will also be removed in cleanup."""
+
+    # Setup logging
+    log = setup_log('releasesorter',
+                    console_output=True,
+                    log_file=log,
+                    level=logging.INFO)
+
+    # Debug logging
+    if debug:
+        log.setLevel(logging.DEBUG)
+
+    # Silent, only output to log
+    if silent:
+        log.propagate = False
+
+    try:
+        release_sorter = ReleaseSorter(sort_dir)
+        release_sorter.cleanup_empty_folders()
+        release_sorter.sort()
+    except ReleaseSorterError, e:
+        raise CommandError(e.message)
+
+if __name__ == '__main__':
+    argh.dispatch_command(main)

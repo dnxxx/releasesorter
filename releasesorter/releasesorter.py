@@ -56,6 +56,22 @@ class ReleaseSorter(object):
                 sorter_file.relative_path(sorter_file.season_dir)))
             sorter_file.season_dir.mkdir()
 
+    def move_subtitle_files(self, sorter_file):
+        """Check for existing subtitle files matching media file and move
+        them to sort folder too.
+        """
+
+        for ext in ('.srt', '.sub', '.idx'):
+            subtitle_path = Path(sorter_file.path.parent, '{}{}'.format(
+                sorter_file.path.stem, ext))
+
+            if subtitle_path.exists():
+                log.info('Moving subtitle file {} to {}'.format(
+                    self.relative_path(subtitle_path, self.sort_dir),
+                    sorter_file.season_dir))
+                subtitle_path.move(Path(self.sort_dir,
+                                   sorter_file.season_dir))
+
     def move_sorter_file(self, sorter_file):
         log.info('Moving {} to {}'.format(sorter_file.relative_path(),
                                           sorter_file.season_dir))
@@ -133,6 +149,9 @@ class ReleaseSorter(object):
 
                 # Move the file
                 self.move_sorter_file(sorter_file)
+
+                # Move subtitle files
+                self.move_subtitle_files(sorter_file)
 
     def sort(self):
         self.get_sorter_files()
